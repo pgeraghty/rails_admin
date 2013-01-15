@@ -48,7 +48,7 @@ group :development, :test do
   gem 'timecop', '~> 0.5'
 end
 
-# hack to support edge version
+# hack to use edge version
 gem 'bootstrap-sass', :git => 'https://github.com/thomas-mcdonald/bootstrap-sass'
 
 gemspec
