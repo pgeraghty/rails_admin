@@ -49,6 +49,6 @@ group :development, :test do
 end
 
 # hack to support edge version
-gem 'bootstrap-sass', git: 'https://github.com/trisweb/bootstrap-sass'
+gem 'bootstrap-sass', :git => 'https://github.com/thomas-mcdonald /bootstrap-sass'
 
 gemspec
