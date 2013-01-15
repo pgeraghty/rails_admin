@@ -10,6 +10,7 @@ describe "RailsAdmin::Adapters::Mongoid", :mongoid => true do
         include Mongoid::Document
         has_many :mongo_posts
         has_many :mongo_comments, :as => :commentable
+        belongs_to :librarian, :polymorphic => true
         field :mongo_blog_id
       end
 
@@ -25,11 +26,14 @@ describe "RailsAdmin::Adapters::Mongoid", :mongoid => true do
       class MongoCategory
         include Mongoid::Document
         has_and_belongs_to_many :mongo_posts
+        belongs_to :librarian, :polymorphic => true
       end
 
       class MongoUser
         include Mongoid::Document
         has_one :mongo_profile
+        has_many :mongo_categories, :as => :librarian
+
         embeds_many :mongo_notes
         accepts_nested_attributes_for :mongo_notes
         field :name, :type => String
@@ -42,6 +46,7 @@ describe "RailsAdmin::Adapters::Mongoid", :mongoid => true do
       class MongoProfile
         include Mongoid::Document
         belongs_to :mongo_user
+        has_many :mongo_blogs, :as => :librarian
       end
 
       class MongoComment
@@ -177,6 +182,12 @@ describe "RailsAdmin::Adapters::Mongoid", :mongoid => true do
       expect(param[:model_proc].call).to eq(MongoComment)
     end
 
+    it 'has correct opposite model lookup for polymorphic associations' do
+      RailsAdmin::Config.stub!(:models_pool).and_return(["MongoBlog", "MongoPost", "MongoCategory", "MongoUser", "MongoProfile", "MongoComment"])
+      expect(@category.associations.find{|a| a[:name] == :librarian}[:model_proc].call).to eq [MongoUser]
+      expect(@blog.associations.find{|a| a[:name] == :librarian}[:model_proc].call).to eq [MongoProfile]
+    end
+
     it "has correct parameter of embeds_one association" do
       param = @post.associations.find{|a| a[:name] == :mongo_note}
       expect(param.reject{|k, v| [:primary_key_proc, :model_proc].include? k }).to eq({
@@ -265,7 +276,7 @@ describe "RailsAdmin::Adapters::Mongoid", :mongoid => true do
 
     it "maps Mongoid column types to RA types" do
       expect(@abstract_model.properties.select{|p| %w(_id _type array_field big_decimal_field
-        boolean_field bson_object_id_field date_field datetime_field default_field float_field
+        boolean_field bson_object_id_field date_field datetime_field time_with_zone_field default_field float_field
         hash_field integer_field name object_field range_field short_text string_field subject
         symbol_field text_field time_field title).
         include? p[:name].to_s}).to match_array [
@@ -313,6 +324,12 @@ describe "RailsAdmin::Adapters::Mongoid", :mongoid => true do
           :length => nil },
         { :name => :datetime_field,
           :pretty_name => "Datetime field",
+          :nullable? => true,
+          :serial? => false,
+          :type => :datetime,
+          :length => nil },
+        { :name => :time_with_zone_field,
+          :pretty_name => "Time with zone field",
           :nullable? => true,
           :serial? => false,
           :type => :datetime,

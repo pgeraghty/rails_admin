@@ -30,16 +30,17 @@ describe "RailsAdmin Basic List" do
 
   describe "GET /admin/player as list" do
     it "shows \"List of Models\", should show filters and should show column headers" do
-      21.times { FactoryGirl.create :player } # two pages of players
+      RailsAdmin.config.default_items_per_page = 1
+      2.times { FactoryGirl.create :player } # two pages of players
       visit index_path(:model_name => "player")
       should have_content("List of Players")
       should have_content("Created at")
       should have_content("Updated at")
 
       # it "shows the show, edit and delete links" do
-      should have_selector("td a", :text => 'Show')
-      should have_selector("td a", :text => 'Edit')
-      should have_selector("td a", :text => 'Delete')
+      should have_selector("li[title='Show'] a")
+      should have_selector("li[title='Edit'] a")
+      should have_selector("li[title='Delete'] a")
 
       # it "has the search box with some prompt text" do
       should have_selector("input[placeholder='Filter']")
@@ -55,14 +56,6 @@ describe "RailsAdmin Basic List" do
 
   describe "GET /admin/player" do
     before do
-      RailsAdmin.config Player do
-        list do
-          field :name
-          field :team
-          field :injured
-          field :retired
-        end
-      end
       @teams = 2.times.map do
         FactoryGirl.create(:team)
       end
@@ -75,6 +68,15 @@ describe "RailsAdmin Basic List" do
     end
 
     it "allows to query on any attribute" do
+      RailsAdmin.config Player do
+        list do
+          field :name
+          field :team
+          field :injured
+          field :retired
+        end
+      end
+
       visit index_path(:model_name => "player", :query => @players[0].name)
       should have_content(@players[0].name)
       (1..3).each do |i|
@@ -83,6 +85,15 @@ describe "RailsAdmin Basic List" do
     end
 
     it "allows to filter on one attribute" do
+      RailsAdmin.config Player do
+        list do
+          field :name
+          field :team
+          field :injured
+          field :retired
+        end
+      end
+
       visit index_path(:model_name => "player", :f => {:injured => {"1" => {:v => "true"}}})
       should have_content(@players[0].name)
       should have_no_content(@players[1].name)
@@ -91,6 +102,15 @@ describe "RailsAdmin Basic List" do
     end
 
     it "allows to combine filters on two different attributes" do
+      RailsAdmin.config Player do
+        list do
+          field :name
+          field :team
+          field :injured
+          field :retired
+        end
+      end
+
       visit index_path(:model_name => "player", :f => {:retired => {"1" => {:v => "true"}}, :injured => {"1" => {:v => "true"}}})
       should have_content(@players[0].name)
       (1..3).each do |i|
@@ -99,6 +119,15 @@ describe "RailsAdmin Basic List" do
     end
 
     it "allows to filter on belongs_to relationships" do
+      RailsAdmin.config Player do
+        list do
+          field :name
+          field :team
+          field :injured
+          field :retired
+        end
+      end
+
       visit index_path(:model_name => "player", :f => {:team => {"1" => { :v => @teams[0].name }}})
       should have_content(@players[0].name)
       should have_content(@players[1].name)
@@ -250,9 +279,9 @@ describe "RailsAdmin Basic List" do
         end
       end
 
-      visit index_path(:model_name => "player")
-      should have_content(%{$.filters.append("Name", "name", "string", null, null, "", 1);})
-      should have_content(%{$.filters.append("Team", "team", "belongs_to_association", null, null, "", 2);})
+      get index_path(:model_name => "player")
+      expect(response.body).to include(%{$.filters.append("Name", "name", "string", "", null, "", 1);})
+      expect(response.body).to include(%{$.filters.append("Team", "team", "belongs_to_association", "", null, "", 2);})
     end
   end
 
@@ -267,19 +296,20 @@ describe "RailsAdmin Basic List" do
     end
   end
 
-  describe "GET /admin/player with 20 objects" do
+  describe "GET /admin/player with 2 objects" do
     before(:each) do
-      @players = 20.times.map { FactoryGirl.create :player }
+      @players = 2.times.map { FactoryGirl.create :player }
       visit index_path(:model_name => "player")
     end
 
-    it "shows \"20 results\"" do
-      should have_content("20 players")
+    it "shows \"2 results\"" do
+      should have_content("2 players")
     end
   end
 
   describe "GET /admin/player with 3 pages, page 2" do
-    before(:each) do
+    before do
+      RailsAdmin.config.default_items_per_page = 1
       items_per_page = RailsAdmin.config.default_items_per_page
       (items_per_page * 3).times { FactoryGirl.create(:player) }
       visit index_path(:model_name => "player", :page => 2)
@@ -333,7 +363,7 @@ describe "RailsAdmin Basic List" do
   describe "list as compact json" do
     it "has_content an array with 2 elements and contain an array of elements with keys id and label" do
       2.times.map { FactoryGirl.create :player }
-      response = page.driver.get(index_path(:model_name => "player", :compact => true, :format => :json))
+      get index_path(:model_name => "player", :compact => true, :format => :json)
       expect(ActiveSupport::JSON.decode(response.body).length).to eq(2)
       ActiveSupport::JSON.decode(response.body).each do |object|
         expect(object).to have_key("id")

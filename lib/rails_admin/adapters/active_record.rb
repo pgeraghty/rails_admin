@@ -107,6 +107,10 @@ module RailsAdmin
         false
       end
 
+      def adapter_supports_joins?
+        true
+      end
+
       private
 
       def query_conditions(query, fields = config.list.fields.select(&:queryable?))
@@ -201,17 +205,17 @@ module RailsAdmin
           return if value.blank?
           value = case operator
           when 'default', 'like'
-            "%#{value}%"
+            "%#{value.downcase}%"
           when 'starts_with'
-            "#{value}%"
+            "#{value.downcase}%"
           when 'ends_with'
-            "%#{value}"
+            "%#{value.downcase}"
           when 'is', '='
-            "#{value}"
+            "#{value.downcase}"
           else
             return
           end
-          ["(#{column} #{like_operator} ?)", value]
+          ["(LOWER(#{column}) #{like_operator} ?)", value]
         when :date
           start_date, end_date = get_filtering_duration(operator, value)
 
@@ -248,7 +252,7 @@ module RailsAdmin
 
       def association_model_lookup(association)
         if association.options[:polymorphic]
-          RailsAdmin::AbstractModel.polymorphic_parents(:active_record, association.name) || []
+          RailsAdmin::AbstractModel.polymorphic_parents(:active_record, self.model.model_name, association.name) || []
         else
           association.klass
         end

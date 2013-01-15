@@ -24,15 +24,15 @@ module RailsAdmin
 
       @@polymorphic_parents = {}
 
-      def polymorphic_parents(adapter, name)
+      def polymorphic_parents(adapter, model_name, name)
         @@polymorphic_parents[adapter.to_sym] ||= {}.tap do |hash|
           all(adapter).each do |am|
             am.associations.select{|r| r[:as] }.each do |association|
-              (hash[association[:as].to_sym] ||= []) << am.model
+              (hash[[association[:model_proc].call.to_s.underscore, association[:as]].join('_').to_sym] ||= []) << am.model
             end
           end
         end
-        @@polymorphic_parents[adapter.to_sym][name.to_sym]
+        @@polymorphic_parents[adapter.to_sym][[model_name.underscore, name].join('_').to_sym]
       end
 
       # For testing
@@ -59,6 +59,10 @@ module RailsAdmin
     # do not store a reference to the model, does not play well with ActiveReload/Rails3.2
     def model
       @model_name.constantize
+    end
+
+    def to_s
+      model.to_s
     end
 
     def config

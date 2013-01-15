@@ -168,7 +168,7 @@ module RailsAdmin
           (@required ||= {})[context] ||= !!([name] + children_fields).uniq.find do |column_name|
             !!abstract_model.model.validators_on(column_name).find do |v|
               !v.options[:allow_nil] and
-              [:presence, :numericality].include?(v.kind) and
+              [:presence, :numericality, :attachment_presence].include?(v.kind) and
               (v.options[:on] == context or v.options[:on].blank?)
             end
           end
@@ -278,6 +278,10 @@ module RailsAdmin
         # Allowed methods for the field in forms
         register_instance_option :allowed_methods do
           [method_name]
+        end
+
+        def parse_input(params)
+          # overriden
         end
 
         def inverse_of

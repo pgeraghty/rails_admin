@@ -290,8 +290,10 @@ describe "RailsAdmin Config DSL List Section" do
       end
       @fans = 2.times.map { FactoryGirl.create :fan }
       visit index_path(:model_name => "fan")
-      expect(find('style')).to have_content("#list th.#{PK_COLUMN}_field")
-      expect(find('style')).to have_content("#list td.#{PK_COLUMN}_field")
+      # NOTE: Capybara really doesn't want us to look at invisible text. This test
+      # could break at any moment.
+      expect(find('style').native.text).to include("#list th.#{PK_COLUMN}_field")
+      expect(find('style').native.text).to include("#list td.#{PK_COLUMN}_field")
     end
 
     it "has option to customize output formatting" do
@@ -362,10 +364,6 @@ describe "RailsAdmin Config DSL List Section" do
 
   # sort_by and sort_reverse options
   describe "default sorting" do
-    before(:each) do
-      RailsAdmin.config(Player){ list { field :name } }
-    end
-
     let(:today){ Date.today }
     let(:players) do
       [{ :name => "Jackie Robinson",  :created_at => today,            :team_id => rand(99999), :number => 42 },
@@ -388,6 +386,7 @@ describe "RailsAdmin Config DSL List Section" do
           list do
             sort_by :created_at
             sort_reverse true
+            field :name
           end
         end
         visit index_path(:model_name => "player")
@@ -401,6 +400,7 @@ describe "RailsAdmin Config DSL List Section" do
       RailsAdmin.config Player do
         list do
           sort_by :created_at
+          field :name
         end
       end
       visit index_path(:model_name => "player")
@@ -414,6 +414,7 @@ describe "RailsAdmin Config DSL List Section" do
         list do
           sort_by :created_at
           sort_reverse false
+          field :name
         end
       end
       visit index_path(:model_name => "player")
