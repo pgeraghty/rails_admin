@@ -1,8 +1,8 @@
-if defined?(Kaminari)
-  Kaminari.configure do |config|
-    config.page_method_name = :per_page_kaminari
-  end
-end
+#if defined?(Kaminari)
+#  Kaminari.configure do |config|
+#    config.page_method_name = :per_page_kaminari
+#  end
+#end
 
 if defined?(WillPaginate)
   module WillPaginate
